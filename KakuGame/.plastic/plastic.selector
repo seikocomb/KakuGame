@@ -1,0 +1,4 @@
+repository "格ゲー@Tiger_jp@cloud"
+  path "/"
+    br "/main"
+    co "/main"
