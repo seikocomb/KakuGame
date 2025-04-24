@@ -58,12 +58,14 @@ public class MachoSkill : MonoBehaviour, ISkill
         }
         Hadouhou.tag = "clone";
         Hadouhou.SetActive(true);
-        Invoke(nameof(Fire), 2);
+        StartCoroutine(Fire());
     }
 
     IEnumerator Fire()
     {
-        yield return new WaitForSeconds(2);
+        main.isWait = true;
+        yield return new WaitForSeconds(1);
+        main.isWait = false;
         HS = Hadouhou.GetComponent<HadouhouScript>();
         HS.Fire(gameObject, Mathf.Lerp(100, 400, Math.Abs(gameObject.transform.position.z - BS.enemy.transform.position.z) / 10));
         Hadouhou.GetComponent<Rigidbody>().AddForce(transform.forward * 8, ForceMode.Impulse);

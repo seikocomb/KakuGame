@@ -24,7 +24,6 @@ public class HadouhouScript : MonoBehaviour
         if(other.gameObject.transform.root.gameObject == BS.enemy)
         {
             rb.velocity = Vector3.zero;
-            gameObject.SetActive(false);
             if(BS.enemyAC.IsGard)
             {
                 BS.enemyBS.damage += damage / 2;
@@ -34,6 +33,7 @@ public class HadouhouScript : MonoBehaviour
             {
                 BS.enemyBS.damage += damage;
             }
+            gameObject.SetActive(false);
         }
         else if(other.gameObject.CompareTag("wall"))
         {
