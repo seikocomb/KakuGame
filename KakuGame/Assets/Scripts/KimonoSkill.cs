@@ -1,5 +1,3 @@
-using System.Collections;
-using System;
 using UnityEngine;
 
 [DefaultExecutionOrder(4)]
@@ -82,7 +80,8 @@ public class KimonoSkill : MonoBehaviour, ISkill
         BS.isCool = true;
 
         distance = Mathf.Clamp(8 - Vector3.Distance(transform.position, BS.enemy.transform.position), 1, 8) / 3;
-        skill = StartCoroutine(BS.KnockBack(BS.enemy, (BS.enemy.transform.position - transform.position).normalized, distance, 0.2f));
+        Vector3 rawDir = BS.enemy.transform.position - transform.position;
+        skill = StartCoroutine(BS.KnockBack(BS.enemy, new Vector3(rawDir.x, 0, rawDir.z).normalized, distance, 0.2f));
         isSkill = true;
         StartCoroutine(BS.Falser(newValue => isSkill = newValue, 0.2f));
 

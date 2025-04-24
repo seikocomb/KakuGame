@@ -56,6 +56,7 @@ public class MachoSkill : MonoBehaviour, ISkill
         {
             Hadouhou = Instantiate(hadouhou, BS.hand2.transform);
         }
+        Hadouhou.transform.SetParent(null);
         Hadouhou.tag = "clone";
         Hadouhou.SetActive(true);
         StartCoroutine(Fire());
@@ -63,12 +64,13 @@ public class MachoSkill : MonoBehaviour, ISkill
 
     IEnumerator Fire()
     {
-        main.isWait = true;
-        yield return new WaitForSeconds(1);
-        main.isWait = false;
+        BS.isHadouhouWait = true;
         HS = Hadouhou.GetComponent<HadouhouScript>();
-        HS.Fire(gameObject, Mathf.Lerp(100, 400, Math.Abs(gameObject.transform.position.z - BS.enemy.transform.position.z) / 10));
-        Hadouhou.GetComponent<Rigidbody>().AddForce(transform.forward * 8, ForceMode.Impulse);
+        HS.Fire(BS, Mathf.Lerp(100, 400, Math.Abs(gameObject.transform.position.z - BS.enemy.transform.position.z) / 10));
+        Vector3 rot = transform.forward;
+        yield return new WaitForSeconds(0.5f);
+        BS.isHadouhouWait = false;
+        Hadouhou.GetComponent<Rigidbody>().AddForce(rot * 8, ForceMode.Impulse);
         main.Player(4, 1);
         if(BS.isPlayer1)
         {

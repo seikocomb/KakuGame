@@ -7,20 +7,29 @@ public class ScoreManager : MonoBehaviour
 {
     Main main;
 
-    TextMeshProUGUI text1;
-    TextMeshProUGUI text2;
+    [SerializeField]TextMeshProUGUI[] HPtexts;
+    [SerializeField]TextMeshProUGUI[] FullHPtexts;
 
     void Start()
     {
         main = GetComponent<Main>();
-
-        text1 = GameObject.Find("damage1").GetComponent<TextMeshProUGUI>();
-        text2 = GameObject.Find("damage2").GetComponent<TextMeshProUGUI>();
     }
 
     void Update()
     {
-        text1.text = "" + Math.Floor(main.player1BS.damage);
-        text2.text = "" + Math.Floor(main.player2BS.damage);
+        if(main.isPractice)
+        {
+            HPtexts[0].text = "" + (750 - Math.Floor(main.player1BS.damage));
+            HPtexts[1].text = "" + (750 - Math.Floor(main.player2BS.damage));
+            FullHPtexts[0].text = "/750";
+            FullHPtexts[1].text = "/750";
+        }
+        else
+        {
+            HPtexts[0].text = "" + (2000 - Math.Floor(main.player1BS.damage));
+            HPtexts[1].text = "" + (2000 - Math.Floor(main.player2BS.damage));
+            FullHPtexts[0].text = "/2000";
+            FullHPtexts[1].text = "/2000";
+        }
     }
 }

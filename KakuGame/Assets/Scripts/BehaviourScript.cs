@@ -52,6 +52,7 @@ public class BehaviourScript : MonoBehaviour
     public bool garded;
     public bool isGardCool;
     public float coolSpan;
+    public bool isHadouhouWait = false;
 
     public bool isCool;
     Image gauge;
@@ -143,7 +144,7 @@ public class BehaviourScript : MonoBehaviour
     {
         if(isSelected)
         {
-            if(main.gameOver == false && main.isWait == false)
+            if(main.gameOver == false && main.isWait == false && isHadouhouWait == false)
             {
                 if(isCool)
                 {

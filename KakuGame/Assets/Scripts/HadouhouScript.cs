@@ -6,39 +6,45 @@ public class HadouhouScript : MonoBehaviour
     BehaviourScript BS;
     Rigidbody rb;
     float damage;
+    bool isSetBS = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Fire(GameObject gameObj, float value)
+    public void Fire(BehaviourScript behaviourScript, float value)
     {
-        BS = gameObj.GetComponent<BehaviourScript>();
-        StartCoroutine(BS.ActiveFalser(gameObject, 2));
+        BS = behaviourScript;
+        isSetBS = true;
         damage = value;
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.transform.root.gameObject == BS.enemy)
+        if(isSetBS)
         {
-            rb.velocity = Vector3.zero;
-            if(BS.enemyAC.IsGard)
+            if(other.gameObject.transform.root.gameObject == BS.enemy)
             {
-                BS.enemyBS.damage += damage / 2;
-                BS.enemyBS.gardDmg += damage / 2;
+                rb.velocity = Vector3.zero;
+                if(BS.enemyAC.IsGard)
+                {
+                    BS.enemyBS.damage += damage / 2;
+                    BS.enemyBS.gardDmg += damage / 2;
+                }
+                else
+                {
+                    BS.enemyBS.damage += damage;
+                }
+                isSetBS = false;
+                gameObject.SetActive(false);
             }
-            else
+            else if(other.gameObject.CompareTag("wall"))
             {
-                BS.enemyBS.damage += damage;
+                rb.velocity = Vector3.zero;
+                isSetBS = false;
+                gameObject.SetActive(false);
             }
-            gameObject.SetActive(false);
-        }
-        else if(other.gameObject.CompareTag("wall"))
-        {
-            rb.velocity = Vector3.zero;
-            gameObject.SetActive(false);
         }
     }
 }
