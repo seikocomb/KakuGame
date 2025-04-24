@@ -4,6 +4,8 @@ using Unity.Jobs;
 using UnityEngine.Profiling;
 using UniGLTF.SpringBoneJobs.InputPorts;
 using UnityEngine;
+using Unity.Collections;
+using System.Linq;
 
 namespace UniGLTF.SpringBoneJobs
 {
@@ -19,20 +21,20 @@ namespace UniGLTF.SpringBoneJobs
     {
         private FastSpringBoneCombinedBuffer _combinedBuffer;
         public FastSpringBoneCombinedBuffer Combined => _combinedBuffer;
-        private readonly LinkedList<FastSpringBoneBuffer> _buffers = new LinkedList<FastSpringBoneBuffer>();
-        private bool _isDirty;
+        private readonly List<FastSpringBoneBuffer> _buffers = new();
+
+        struct Request
+        {
+            public FastSpringBoneBuffer Remove;
+            public FastSpringBoneBuffer Add;
+        }
+        private Queue<Request> _request = new();
+
         public bool HasBuffer => _buffers.Count > 0 && _combinedBuffer != null;
 
-        public void Register(FastSpringBoneBuffer buffer)
+        public void Register(FastSpringBoneBuffer add, FastSpringBoneBuffer remove)
         {
-            _buffers.AddLast(buffer);
-            _isDirty = true;
-        }
-
-        public void Unregister(FastSpringBoneBuffer buffer)
-        {
-            _buffers.Remove(buffer);
-            _isDirty = true;
+            _request.Enqueue(new Request { Remove = remove, Add = add });
         }
 
         /// <summary>
@@ -40,14 +42,45 @@ namespace UniGLTF.SpringBoneJobs
         /// </summary>
         public JobHandle ReconstructIfDirty(JobHandle handle)
         {
-            if (_isDirty)
+            if (_request.Count == 0)
             {
-                var result = ReconstructBuffers(handle);
-                _isDirty = false;
-                return result;
+                return handle;
             }
 
-            return handle;
+            if (_combinedBuffer is FastSpringBoneCombinedBuffer combined)
+            {
+                // index が変わる前に シミュレーションの状態を保存する。
+                // 状態の保存場所が BlittableJoint から CurrentTails に移動しているのでここでやる。
+                var logicsIndex = 0;
+                foreach (var buffer in _buffers)
+                {
+                    buffer.BackupCurrentTails(combined.CurrentTails, combined.NextTails, logicsIndex);
+                    logicsIndex += buffer.Logics.Length;
+                }
+            }
+
+            // buffer 増減
+            while (_request.Count > 0)
+            {
+                var req = _request.Dequeue();
+                if (req.Remove != null && req.Add != null)
+                {
+                    // 順番が変わらないように入れ替える
+                    var index = _buffers.IndexOf(req.Remove);
+                    _buffers[index] = req.Add;
+                }
+                else if (req.Add != null)
+                {
+                    _buffers.Add(req.Add);
+                }
+                else if (req.Remove != null)
+                {
+                    _buffers.Remove(req.Remove);
+                }
+            }
+
+            // 再構築
+            return ReconstructBuffers(handle);
         }
 
         /// <summary>
@@ -60,10 +93,6 @@ namespace UniGLTF.SpringBoneJobs
             Profiler.BeginSample("FastSpringBone.ReconstructBuffers.DisposeBuffers");
             if (_combinedBuffer is FastSpringBoneCombinedBuffer combined)
             {
-                Profiler.BeginSample("FastSpringBone.ReconstructBuffers.SaveToSourceBuffer");
-                combined.SaveToSourceBuffer();
-                Profiler.EndSample();
-
                 // TODO: Dispose せずに再利用？
                 combined.Dispose();
             }
@@ -89,9 +118,9 @@ namespace UniGLTF.SpringBoneJobs
 
         public void Dispose()
         {
-            if (_combinedBuffer is FastSpringBoneCombinedBuffer combined)
+            if (_combinedBuffer != null)
             {
-                combined.Dispose();
+                _combinedBuffer.Dispose();
                 _combinedBuffer = null;
             }
         }

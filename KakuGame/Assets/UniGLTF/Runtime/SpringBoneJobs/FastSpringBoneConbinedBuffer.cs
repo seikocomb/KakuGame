@@ -78,11 +78,14 @@ namespace UniGLTF.SpringBoneJobs
             _batchedBufferLogicSizes = batchedBufferLogicSizes;
         }
 
+        /// <summary>
+        /// Job向けに、Lidt[FastSpringBoneBuffer] をひとつの FastSpringBoneCombinedBuffer に統合する
+        /// </summary>
         internal static JobHandle Create(JobHandle handle,
-            LinkedList<FastSpringBoneBuffer> _buffers, out FastSpringBoneCombinedBuffer combined)
+            IReadOnlyList<FastSpringBoneBuffer> buffers, out FastSpringBoneCombinedBuffer combined)
         {
             Profiler.BeginSample("FastSpringBone.ReconstructBuffers.CopyToBatchedBuffers");
-            var batchedBuffers = _buffers.ToArray();
+            var batchedBuffers = buffers.ToArray();
             var batchedBufferLogicSizes = batchedBuffers.Select(buffer => buffer.Logics.Length).ToArray();
             Profiler.EndSample();
 
@@ -92,18 +95,18 @@ namespace UniGLTF.SpringBoneJobs
             var collidersCount = 0;
             var logicsCount = 0;
             var transformsCount = 0;
-            foreach (var buffer in _buffers)
+            foreach (var buffer in buffers)
             {
                 springsCount += buffer.Springs.Length;
                 collidersCount += buffer.Colliders.Length;
                 logicsCount += buffer.Logics.Length;
-                transformsCount += buffer.BlittableTransforms.Length;
+                transformsCount += buffer.Transforms.Length;
             }
             Profiler.EndSample();
 
             // バッファの構築
             Profiler.BeginSample("FastSpringBone.ReconstructBuffers.CreateBuffers");
-            combined = new FastSpringBoneCombinedBuffer(logicsCount, springsCount, _buffers.Count,
+            combined = new FastSpringBoneCombinedBuffer(logicsCount, springsCount, buffers.Count,
                 collidersCount, transformsCount, batchedBuffers, batchedBufferLogicSizes);
             Profiler.EndSample();
 
@@ -112,6 +115,24 @@ namespace UniGLTF.SpringBoneJobs
 
         private JobHandle Batching(JobHandle handle)
         {
+            // TransformAccessArrayの構築
+            Profiler.BeginSample("FastSpringBone.ReconstructBuffers.LoadTransformAccessArray");
+            var transforms = new Transform[_transforms.Length];
+            var transformAccessArrayOffset = 0;
+            foreach (var buffer in _batchedBuffers)
+            {
+                Array.Copy(buffer.Transforms, 0, transforms, transformAccessArrayOffset, buffer.Transforms.Length);
+                transformAccessArrayOffset += buffer.Transforms.Length;
+            }
+            _transformAccessArray = new TransformAccessArray(transforms);
+            Profiler.EndSample();
+
+            // Transforms を更新。後続の InitCurrentTails で使う
+            handle = new PullTransformJob
+            {
+                Transforms = Transforms
+            }.Schedule(TransformAccessArray, handle);
+
             Profiler.BeginSample("FastSpringBone.ReconstructBuffers.ScheduleLoadBufferJobs");
             var springsOffset = 0;
             var collidersOffset = 0;
@@ -129,13 +150,8 @@ namespace UniGLTF.SpringBoneJobs
                     _jointMap.Add(buffer.Transforms[head], logicsOffset + j);
                 }
 
-                // バッファの読み込みをスケジュール
-                handle = new LoadTransformsJob
-                {
-                    SrcTransforms = buffer.BlittableTransforms,
-                    DestTransforms = new NativeSlice<BlittableTransform>(_transforms, transformOffset,
-                            buffer.BlittableTransforms.Length)
-                }.Schedule(buffer.BlittableTransforms.Length, 1, handle);
+                // 速度の維持
+                buffer.RestoreCurrentTails(_currentTails, _nextTails, logicsOffset);
 
                 handle = new LoadSpringsJob
                 {
@@ -165,26 +181,10 @@ namespace UniGLTF.SpringBoneJobs
                 springsOffset += buffer.Springs.Length;
                 collidersOffset += buffer.Colliders.Length;
                 logicsOffset += buffer.Logics.Length;
-                transformOffset += buffer.BlittableTransforms.Length;
+                transformOffset += buffer.Transforms.Length;
             }
 
             handle = InitCurrentTails(handle);
-
-            // TransformAccessArrayの構築と並行してJobを行うため、この時点で走らせておく
-            JobHandle.ScheduleBatchedJobs();
-            Profiler.EndSample();
-
-            // TransformAccessArrayの構築
-            Profiler.BeginSample("FastSpringBone.ReconstructBuffers.LoadTransformAccessArray");
-            var transforms = new Transform[_transforms.Length];
-            var transformAccessArrayOffset = 0;
-            foreach (var buffer in _batchedBuffers)
-            {
-                Array.Copy(buffer.Transforms, 0, transforms, transformAccessArrayOffset, buffer.Transforms.Length);
-                transformAccessArrayOffset += buffer.BlittableTransforms.Length;
-            }
-
-            _transformAccessArray = new TransformAccessArray(transforms);
             Profiler.EndSample();
 
             return handle;
@@ -208,25 +208,6 @@ namespace UniGLTF.SpringBoneJobs
             if (_transformAccessArray.isCreated) _transformAccessArray.Dispose();
         }
 
-        /// <summary>
-        /// バッチングされたバッファから、個々のバッファへと値を戻す
-        /// Logics to _batchedBuffers[].Logics
-        /// バッファの再構築前にこの処理を行わないと、揺れの状態がリセットされてしまい、不自然な挙動になる
-        /// </summary>
-        internal void SaveToSourceBuffer()
-        {
-            var logicsIndex = 0;
-            for (var i = 0; i < _batchedBuffers.Length; ++i)
-            {
-                var length = _batchedBufferLogicSizes[i];
-                if (!_batchedBuffers[i].IsDisposed && length > 0)
-                {
-                    NativeArray<BlittableJointImmutable>.Copy(Logics, logicsIndex, _batchedBuffers[i].Logics, 0, length);
-                }
-                logicsIndex += length;
-            }
-        }
-
         public void FlipBuffer()
         {
             var tmp = _prevTails;
@@ -248,23 +229,6 @@ namespace UniGLTF.SpringBoneJobs
             if (_modelMap.TryGetValue(model, out var modelIndex))
             {
                 _models[modelIndex] = modelSetting;
-            }
-        }
-
-#if ENABLE_SPRINGBONE_BURST
-        [BurstCompile]
-#endif
-        /// <summary>
-        /// 
-        /// </summary>
-        private struct LoadTransformsJob : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<BlittableTransform> SrcTransforms;
-            [WriteOnly] public NativeSlice<BlittableTransform> DestTransforms;
-
-            public void Execute(int index)
-            {
-                DestTransforms[index] = SrcTransforms[index];
             }
         }
 
@@ -328,49 +292,73 @@ namespace UniGLTF.SpringBoneJobs
 #endif
         private struct InitCurrentTailsJob : IJobParallelFor
         {
+            [ReadOnly] public NativeArray<BlittableSpring> Springs;
+
             [ReadOnly] public NativeArray<BlittableJointImmutable> Logics;
             [ReadOnly] public NativeArray<BlittableTransform> Transforms;
-            [WriteOnly] public NativeSlice<Vector3> CurrentTails;
-            [WriteOnly] public NativeSlice<Vector3> PrevTails;
-            [WriteOnly] public NativeSlice<Vector3> NextTails;
+            [NativeDisableParallelForRestriction] public NativeSlice<Vector3> CurrentTails;
+            [NativeDisableParallelForRestriction] public NativeSlice<Vector3> PrevTails;
+            [NativeDisableParallelForRestriction] public NativeSlice<Vector3> NextTails;
 
-            public void Execute(int jointIndex)
+            public void Execute(int springIndex)
             {
-                var tailIndex = Logics[jointIndex].tailTransformIndex;
-                if (tailIndex == -1)
+                var spring = Springs[springIndex];
+                var center = spring.centerTransformIndex >= 0
+                    ? Transforms[spring.transformIndexOffset + spring.centerTransformIndex]
+                    : (BlittableTransform?)null;
+                for (int jointIndex = spring.logicSpan.startIndex; jointIndex < spring.logicSpan.EndIndex; ++jointIndex)
                 {
-                    // tail 無い
-                    var tail = Transforms[Logics[jointIndex].headTransformIndex];
-                    CurrentTails[jointIndex] = tail.position;
-                    PrevTails[jointIndex] = tail.position;
-                    NextTails[jointIndex] = tail.position;
-                }
-                else
-                {
-                    var tail = Transforms[tailIndex];
-                    CurrentTails[jointIndex] = tail.position;
-                    PrevTails[jointIndex] = tail.position;
-                    NextTails[jointIndex] = tail.position;
+                    if (float.IsNaN(CurrentTails[jointIndex].x))
+                    {
+                        // Transsform の現状を使う。velocity を zero にする
+                        int tailIndex;
+                        if (Logics[jointIndex].tailTransformIndex == -1)
+                        {
+                            // tail 無い
+                            tailIndex = spring.transformIndexOffset + Logics[jointIndex].headTransformIndex;
+                        }
+                        else
+                        {
+                            tailIndex = spring.transformIndexOffset + Logics[jointIndex].tailTransformIndex;
+                        }
+
+                        var tail = Transforms[tailIndex];
+                        var tailPos = center.HasValue ? center.Value.worldToLocalMatrix.MultiplyPoint3x4(tail.position) : tail.position;
+                        CurrentTails[jointIndex] = tailPos;
+                        PrevTails[jointIndex] = tailPos;
+                        NextTails[jointIndex] = tailPos;
+                    }
                 }
             }
         }
 
-        /// <summary>
-        /// Transform から currentTail を更新。
-        /// prevTail も同じ内容にする(速度0)。
+        /// <summary>        
+        /// # CurrentTails[i] == NAN
+        /// 
+        /// Transforms から Current, Prev, Next を代入する。
+        /// 速度 0 で初期化することになる。
+        /// 
+        /// # CurrentTails[i] != NAN
+        /// 
+        /// 本処理はスキップされて Current, Next の利用が継続されます。
+        /// 
+        /// # NAN
+        /// 
+        /// Batching 関数内の FastSpringBoneBuffer.RestoreCurrentTails にて backup の Current, Next が無かったときに
+        /// 目印として NAN が代入されます。
         /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
         public JobHandle InitCurrentTails(JobHandle handle)
         {
             return new InitCurrentTailsJob
             {
+                Springs = Springs,
+
                 Logics = Logics,
                 Transforms = Transforms,
                 CurrentTails = CurrentTails,
                 PrevTails = PrevTails,
                 NextTails = NextTails,
-            }.Schedule(Logics.Length, 1, handle);
+            }.Schedule(Springs.Length, 1, handle);
         }
 
         public void InitializeJointsLocalRotation(FastSpringBoneBuffer buffer)
@@ -379,9 +367,9 @@ namespace UniGLTF.SpringBoneJobs
             for (var i = 0; i < _batchedBuffers.Length; ++i)
             {
                 var length = _batchedBufferLogicSizes[i];
-                Debug.Assert(length == buffer.Logics.Length);
                 if (_batchedBuffers[i] == buffer)
                 {
+                    Debug.Assert(length == buffer.Logics.Length);
                     for (var j = 0; j < length; ++j)
                     {
                         var logic = buffer.Logics[j];
@@ -401,22 +389,23 @@ namespace UniGLTF.SpringBoneJobs
 
         public void DrawGizmos()
         {
-            foreach (var collider in _colliders)
-            {
-                collider.DrawGizmo(_transforms[collider.transformIndex]);
-            }
-
             foreach (var spring in _springs)
             {
+                for (int i = spring.colliderSpan.startIndex; i < spring.colliderSpan.EndIndex; ++i)
+                {
+                    var collider = _colliders[i];
+                    collider.DrawGizmo(_transforms[spring.transformIndexOffset + collider.transformIndex]);
+                }
+
                 for (int i = spring.logicSpan.startIndex; i < spring.logicSpan.EndIndex; ++i)
                 {
                     var joint = _logics[i];
-                    joint.DrawGizmo(_transforms[joint.tailTransformIndex], _joints[i]);
+                    joint.DrawGizmo(_transforms[spring.transformIndexOffset + joint.tailTransformIndex], _joints[i]);
 
                     Gizmos.matrix = Matrix4x4.identity;
                     Gizmos.DrawLine(
-                        _transforms[joint.tailTransformIndex].position,
-                        _transforms[joint.headTransformIndex].position);
+                        _transforms[spring.transformIndexOffset + joint.tailTransformIndex].position,
+                        _transforms[spring.transformIndexOffset + joint.headTransformIndex].position);
                 }
             }
         }

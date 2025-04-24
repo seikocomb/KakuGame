@@ -117,7 +117,7 @@ namespace UniGLTF
             if (Copy.transform.TryGetComponent<Renderer>(out var r))
             {
                 // should throw ?
-                Debug.LogError("root mesh is not exported");
+                UniGLTFLogger.Error("root mesh is not exported");
             }
 
             ReportProgress("prepared", 0.1f);
@@ -273,6 +273,12 @@ namespace UniGLTF
                     ? MeshExporter_DividedVertexBuffer.Export(_data, unityMesh, Materials, m_settings.InverseAxis.Create(), m_settings)
                     : MeshExporter_SharedVertexBuffer.Export(_data, unityMesh, Materials, m_settings.InverseAxis.Create(), m_settings)
                     ;
+
+                if (gltfMesh.primitives == null || gltfMesh.primitives.Count == 0)
+                {
+                    Debug.LogError($"gltfMesh.primitives is empty: {unityMesh.Mesh.name}");
+                }
+
                 _gltf.meshes.Add(gltfMesh);
                 Meshes.Add(unityMesh.Mesh);
                 if (!MeshBlendShapeIndexMap.ContainsKey(unityMesh.Mesh))

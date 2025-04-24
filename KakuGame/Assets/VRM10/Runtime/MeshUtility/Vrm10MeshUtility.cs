@@ -66,7 +66,7 @@ namespace UniVRM10
                 // Mesh 統合の後処理
                 // FirstPerson == "auto" の場合に                
                 // 頭部の無いモデルを追加で作成する
-                Debug.Log("generateFirstPerson");
+                UniGLTFLogger.Log("generateFirstPerson");
                 if (result.Integrated.Mesh != null)
                 {
                     // BlendShape 有り
@@ -96,7 +96,7 @@ namespace UniVRM10
             }
             else
             {
-                Debug.LogWarning("no result");
+                UniGLTFLogger.Warning("no result");
             }
         }
 
@@ -116,14 +116,10 @@ namespace UniVRM10
 
             if (FreezeMesh)
             {
-                Avatar newAvatar = default;
                 if (target.TryGetComponent<Animator>(out var animator))
                 {
-                    newAvatar = AvatarDescription.RecreateAvatar(animator);
-                    GameObject.DestroyImmediate(animator);
+                    HumanoidLoader.RebuildHumanAvatar(animator);
                 }
-                animator = target.AddComponent<Animator>();
-                animator.avatar = newAvatar;
             }
 
             return (list, newList);

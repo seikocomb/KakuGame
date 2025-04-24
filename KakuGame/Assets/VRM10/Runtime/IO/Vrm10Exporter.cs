@@ -601,7 +601,7 @@ namespace UniVRM10
                 }
 
                 // serialize to gltfNode
-                var node = converter.Nodes[constraint.ConstraintTarget];
+                var node = converter.Nodes[constraint.ConstraintTarget.gameObject];
                 var nodeIndex = model.Nodes.IndexOf(node);
                 var gltfNode = nodes[nodeIndex];
                 UniGLTF.Extensions.VRMC_node_constraint.GltfSerializer.SerializeTo(ref gltfNode.extensions, vrmConstraint);
@@ -777,7 +777,7 @@ namespace UniVRM10
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning(ex);
+                    UniGLTFLogger.Warning($"{ex}");
                 }
             }
             foreach (var b in e.MaterialColorBindings)
@@ -788,7 +788,7 @@ namespace UniVRM10
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning(ex);
+                    UniGLTFLogger.Warning($"{ex}");
                 }
             }
             foreach (var b in e.MaterialUVBindings)
@@ -799,7 +799,7 @@ namespace UniVRM10
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning(ex);
+                    UniGLTFLogger.Warning($"{ex}");
                 }
             }
             return vrmExpression;

@@ -55,8 +55,10 @@ namespace UniVRM10
         {
             if (m_fastSpringBoneBuffer != null)
             {
-                m_fastSpringBoneService.BufferCombiner.Unregister(m_fastSpringBoneBuffer);
+                m_fastSpringBoneService.BufferCombiner.Register(add: null, remove: m_fastSpringBoneBuffer);
                 m_fastSpringBoneBuffer.Dispose();
+                // #2616
+                m_fastSpringBoneBuffer = null;
             }
         }
 
@@ -87,16 +89,10 @@ namespace UniVRM10
             }
             m_building = true;
 
-            // 登録削除
-            if (m_fastSpringBoneBuffer != null)
-            {
-                m_fastSpringBoneService.BufferCombiner.Unregister(m_fastSpringBoneBuffer);
-            }
+            var fastSpringBoneBuffer = await FastSpringBoneBufferFactory.ConstructSpringBoneAsync(awaitCaller, m_instance, m_fastSpringBoneBuffer);
 
-            m_fastSpringBoneBuffer = await FastSpringBoneBufferFactory.ConstructSpringBoneAsync(new ImmediateCaller(), m_instance, m_fastSpringBoneBuffer);
-
-            // 登録
-            m_fastSpringBoneService.BufferCombiner.Register(m_fastSpringBoneBuffer);
+            m_fastSpringBoneService.BufferCombiner.Register(add: fastSpringBoneBuffer, remove: m_fastSpringBoneBuffer);
+            m_fastSpringBoneBuffer = fastSpringBoneBuffer;
 
             m_building = false;
             return true;
