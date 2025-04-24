@@ -66,23 +66,15 @@ public class HitJudge : MonoBehaviour
                     {
                         if(!enemyAC.IsJump)
                         {
-                            if(enemyAC.IsGard)
+                            if(BS.isPlayer1)
                             {
-                                enemyBS.gardDmg += BS.power * 1;
-                                Garded();
+                                Effecter(main.rightLeg1, BS.leg_right.gameObject, 0.5f, false);
                             }
                             else
                             {
-                                if(BS.isPlayer1)
-                                {
-                                    Effecter(main.rightLeg1, BS.leg_right.gameObject, 0.5f, false);
-                                }
-                                else
-                                {
-                                    Effecter(main.rightLeg2, BS.leg_right.gameObject, 0.5f, false);
-                                }
-                                Hit(1);
+                                Effecter(main.rightLeg2, BS.leg_right.gameObject, 0.5f, false);
                             }
+                            Hit(5);
                             main.Player(1, 0.5f);
                         }
                     }

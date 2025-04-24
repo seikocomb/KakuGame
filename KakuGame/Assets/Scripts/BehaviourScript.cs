@@ -257,15 +257,21 @@ public class BehaviourScript : MonoBehaviour
                         {
                             if(AC.IsPunch == false && AC.IsKick == false && AC.IsUpper == false)
                             {
-                                if(AC.IsJump)
+                                if(AC.IsJump || AC.IsCrouch)
                                 {
                                     AC.IsKick = true;
                                 }
-                                else if(!AC.IsCrouch)
+                                else
                                 {
                                     AC.IsPunch = true;
                                 }
                                 Attacker(1);
+
+                                if(AC.IsCrouch)
+                                {
+                                    transform.Rotate(0, 180, 0);
+                                    StartCoroutine(Rotater());
+                                }
                             }
                         }
 
@@ -273,11 +279,14 @@ public class BehaviourScript : MonoBehaviour
                         {
                             if(AC.IsPunch == false && AC.IsKick == false && AC.IsUpper == false)
                             {
-                                if(!AC.IsCrouch)
-                                {
-                                    AC.IsKick = true;
-                                }
+                                AC.IsKick = true;
                                 Attacker(2);
+
+                                if(AC.IsCrouch)
+                                {
+                                    transform.Rotate(0, 180, 0);
+                                    StartCoroutine(Rotater());
+                                }
                             }
                         }
 
@@ -452,6 +461,13 @@ public class BehaviourScript : MonoBehaviour
         AC.IsPunch = false;
         AC.IsKick = false;
         AC.IsUpper = false;
+    }
+
+    IEnumerator Rotater()
+    {
+        yield return new WaitForSeconds(0.13f * attackRate);
+        //yield return null;
+        transform.Rotate(0, 180, 0);
     }
 
     public IEnumerator Truer(Action<bool>setBool, float time)
