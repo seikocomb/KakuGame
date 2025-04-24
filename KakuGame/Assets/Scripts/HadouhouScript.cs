@@ -5,20 +5,18 @@ public class HadouhouScript : MonoBehaviour
 {
     BehaviourScript BS;
     Rigidbody rb;
+    float damage;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Call(GameObject gameObj)
+    public void Fire(GameObject gameObj, float value)
     {
         BS = gameObj.GetComponent<BehaviourScript>();
-        try
-        {
-            Invoke(nameof(Fuck), 2);
-        }
-        catch{}
+        StartCoroutine(BS.ActiveFalser(gameObject, 2));
+        damage = value;
     }
 
     void OnTriggerEnter(Collider other)
@@ -27,17 +25,20 @@ public class HadouhouScript : MonoBehaviour
         {
             rb.velocity = Vector3.zero;
             gameObject.SetActive(false);
-            BS.enemyBS.damage += 300;
+            if(BS.enemyAC.IsGard)
+            {
+                BS.enemyBS.damage += damage / 2;
+                BS.enemyBS.gardDmg += damage / 2;
+            }
+            else
+            {
+                BS.enemyBS.damage += damage;
+            }
         }
         else if(other.gameObject.CompareTag("wall"))
         {
             rb.velocity = Vector3.zero;
             gameObject.SetActive(false);
         }
-    }
-
-    void Fuck()
-    {
-        gameObject.SetActive(false);
     }
 }

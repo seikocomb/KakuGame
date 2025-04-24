@@ -38,6 +38,7 @@ public class MachoSkill : MonoBehaviour, ISkill
                 {
                     if(AC.IsPunch == false && AC.IsKick == false && AC.IsUpper == false && AC.IsGard == false)
                     {
+                        AC.Special = true;
                         Skill();
                     }
                 }
@@ -57,9 +58,15 @@ public class MachoSkill : MonoBehaviour, ISkill
         }
         Hadouhou.tag = "clone";
         Hadouhou.SetActive(true);
+        Invoke(nameof(Fire), 2);
+    }
+
+    IEnumerator Fire()
+    {
+        yield return new WaitForSeconds(2);
         HS = Hadouhou.GetComponent<HadouhouScript>();
-        HS.Call(gameObject);
-        Hadouhou.GetComponent<Rigidbody>().AddForce(transform.forward * 5, ForceMode.Impulse);
+        HS.Fire(gameObject, Mathf.Lerp(100, 400, Math.Abs(gameObject.transform.position.z - BS.enemy.transform.position.z) / 10));
+        Hadouhou.GetComponent<Rigidbody>().AddForce(transform.forward * 8, ForceMode.Impulse);
         main.Player(4, 1);
         if(BS.isPlayer1)
         {
@@ -70,6 +77,7 @@ public class MachoSkill : MonoBehaviour, ISkill
             main.skillCnt2 += 1;
         }
         BS.isCool = true;
+        AC.Special = false;
         coroutine = StartCoroutine(main.FalserwB(newValue => isCoroutine = newValue, newValue => BS.isCool = newValue, BS.coolSpan));
     }
 
