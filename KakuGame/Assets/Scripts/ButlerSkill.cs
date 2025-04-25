@@ -68,7 +68,7 @@ public class ButlerSkill : MonoBehaviour, ISkill
             StartCoroutine(BS.Falser(newValue => isPlaced = newValue, 0.5f));
             coroutine = StartCoroutine(main.FalserwB(newValue => isCoroutine = newValue, newValue => BS.isCool = newValue, BS.coolSpan));
             BS.power = 10;
-            BS.enemyBS.power /= 2;
+            BS.enemyBS.power /= 1.5f;
             Invoke(nameof(BufReset), 3);
         }
     }
@@ -81,7 +81,7 @@ public class ButlerSkill : MonoBehaviour, ISkill
             "kimono" or "kimono2" => 6,
             "macho" or "macho2" => 8,
             "speed" or "speed2" => 5,
-            _ => (float)7,
+            _ => 7,
         };
     }
 

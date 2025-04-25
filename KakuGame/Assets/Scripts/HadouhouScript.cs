@@ -37,13 +37,13 @@ public class HadouhouScript : MonoBehaviour
                     BS.enemyBS.damage += damage;
                 }
                 isSetBS = false;
-                gameObject.SetActive(false);
+                Destroy(gameObject);
             }
             else if(other.gameObject.CompareTag("wall"))
             {
                 rb.velocity = Vector3.zero;
                 isSetBS = false;
-                gameObject.SetActive(false);
+                Destroy(gameObject);
             }
         }
     }

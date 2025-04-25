@@ -51,5 +51,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "KakuGame.sln"
+    "dotnet.defaultSolution": "KakuGame.sln",
+    "FSharp.suggestGitignore": false
 }

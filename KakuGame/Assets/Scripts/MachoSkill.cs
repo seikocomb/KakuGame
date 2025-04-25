@@ -60,6 +60,7 @@ public class MachoSkill : MonoBehaviour, ISkill
         Hadouhou.tag = "clone";
         Hadouhou.SetActive(true);
         StartCoroutine(Fire());
+        StartCoroutine(BS.Destroyer(Hadouhou, 2));
     }
 
     IEnumerator Fire()

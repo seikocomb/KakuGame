@@ -33,11 +33,11 @@ public class Bullet : MonoBehaviour
                 StartCoroutine(BS.ActiveFalser(gameObject, 0.12f));
                 if(BS.enemyAC.IsGard)
                 {
-                    BS.enemyBS.gardDmg += 15;
+                    BS.enemyBS.gardDmg += 25;
                 }
                 else
                 {
-                    BS.enemyBS.damage += 15;
+                    BS.enemyBS.damage += 25;
                 }
                 effect = Instantiate(main.effets[2], transform.position, Quaternion.Euler(-transform.rotation.x, 0, 0));
                 effect.tag = "clone";

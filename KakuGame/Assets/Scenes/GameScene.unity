@@ -855,6 +855,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -6749,6 +6750,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -14603,6 +14605,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -17738,6 +17741,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -17787,7 +17791,7 @@ CharacterController:
   m_StepOffset: 0
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1188795415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22022,6 +22026,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -33603,6 +33608,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -34212,6 +34218,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0
@@ -35028,6 +35035,7 @@ MonoBehaviour:
   damage: 0
   gardDmg: 0
   garded: 0
+  gardCounter: 0
   isGardCool: 0
   coolSpan: 0
   isHadouhouWait: 0

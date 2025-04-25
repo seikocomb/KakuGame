@@ -54,6 +54,7 @@ public class BehaviourScript : MonoBehaviour
     public bool isGardCool;
     public float coolSpan;
     public bool isHadouhouWait = false;
+    bool isFall;
 
     public bool isCool;
     Image gauge;
@@ -167,13 +168,15 @@ public class BehaviourScript : MonoBehaviour
                     CC.center = Vector3.zero;
                 }
 
-                if(transform.position.z >= 4.99 || transform.position.z <= -4.99)
+                if(transform.position.z >= 5 || transform.position.z <= -5 || transform.position.y < -0.1)
                 {
+                    isFall = true;
                     moveDirection.y += Physics.gravity.y * Time.deltaTime;
                     CC.center = new Vector3(0, 100, 0);
                 }
                 else if(isGrounded)
                 {
+                    isFall = false;
                     if(Input.GetKeyDown(up))
                     {
                         moveDirection.y = jumpForce;
@@ -182,6 +185,7 @@ public class BehaviourScript : MonoBehaviour
                 }
                 else
                 {
+                    isFall = false;
                     moveDirection.y += Physics.gravity.y * Time.deltaTime;
                     hitCounter = 0;
                 }
@@ -386,11 +390,14 @@ public class BehaviourScript : MonoBehaviour
                 CC.Move(moveDirection * Time.deltaTime);
 
                 tmp = transform.position;
-                if(tmp.z >= -4.9 && tmp.z <= 4.9)
+                if(isFall == false)
                 {
-                    if(tmp.y < 0)
+                    if(tmp.z >= -4.9 && tmp.z <= 4.9)
                     {
-                        tmp.y = 0;
+                        if(tmp.y < 0)
+                        {
+                            tmp.y = 0;
+                        }
                     }
                 }
                 transform.position = new Vector3(0, tmp.y, tmp.z);
@@ -427,23 +434,26 @@ public class BehaviourScript : MonoBehaviour
     {
         if(hit.gameObject.name == "floor")
         {
-            isGrounded = true;
-            upperCounter = 0;
-            hitCounter ++;
-            if(hitCounter == 1)
+            if(isFall == false)
             {
-                main.Player(0, 1);
-                jumpEffect = Instantiate(main.effets[0], new Vector3(0, 0.1f, transform.position.z), Quaternion.Euler(270, 0, 0));
-                jumpEffect.tag = "clone";
-                StartCoroutine(Destroyer(jumpEffect, 0.2f));
-            }
-            else
-            {
-                if(AC.IsWalk)
+                isGrounded = true;
+                upperCounter = 0;
+                hitCounter ++;
+                if(hitCounter == 1)
                 {
-                    walkEffect = Instantiate(main.effets[1], transform.position, Quaternion.Euler(270, 0, 0));
-                    walkEffect.tag = "clone";
-                    StartCoroutine(Destroyer(walkEffect, 0.05f));
+                    main.Player(0, 1);
+                    jumpEffect = Instantiate(main.effets[0], new Vector3(0, 0.1f, transform.position.z), Quaternion.Euler(270, 0, 0));
+                    jumpEffect.tag = "clone";
+                    StartCoroutine(Destroyer(jumpEffect, 0.2f));
+                }
+                else
+                {
+                    if(AC.IsWalk)
+                    {
+                        walkEffect = Instantiate(main.effets[1], transform.position, Quaternion.Euler(270, 0, 0));
+                        walkEffect.tag = "clone";
+                        StartCoroutine(Destroyer(walkEffect, 0.05f));
+                    }
                 }
             }
         }
