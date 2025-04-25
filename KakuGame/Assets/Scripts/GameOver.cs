@@ -15,6 +15,8 @@ public class GameOver : MonoBehaviour
 
     [SerializeField]GameObject[] canvases;
 
+    bool isThanks = false;
+
     void Start()
     {
         canvases[0].SetActive(true);
@@ -109,14 +111,22 @@ public class GameOver : MonoBehaviour
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Escape))
+        if(Input.GetKeyDown(KeyCode.R))
         {
-            Thanks();
+            if(isThanks)
+            {
+                LoadStart();
+            }
+            else
+            {
+                Thanks();
+            }
         }
     }
 
     void Thanks()
     {
+        isThanks = true;
         canvases[0].SetActive(false);
         canvases[1].SetActive(true);
         Invoke(nameof(LoadStart), 5);

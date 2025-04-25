@@ -181,6 +181,7 @@ public class Main : MonoBehaviour
             player1BS.leg_right = GameObject.Find("Cube_brl").GetComponent<BoxCollider>();
             player1BS.arm_left = GameObject.Find("Cube_bla").GetComponent<BoxCollider>();
             player1BS.arm_right = GameObject.Find("Cube_bra").GetComponent<BoxCollider>();
+            player1BS.weapon = null;
             player1BS.moveSpeed = 3.5f;
             player1BS.power = 7;
             player1BS.jumpForce = 6.25f;
@@ -255,9 +256,10 @@ public class Main : MonoBehaviour
             player2BS.leg_right = GameObject.Find("Cube_brl2").GetComponent<BoxCollider>();
             player2BS.arm_left = GameObject.Find("Cube_bla2").GetComponent<BoxCollider>();
             player2BS.arm_right = GameObject.Find("Cube_bra2").GetComponent<BoxCollider>();
+            player1BS.weapon = null;
             player2BS.moveSpeed = 3.5f;
             player2BS.power = 7;
-            player2BS.jumpForce = 7;
+            player2BS.jumpForce = 6.25f;
             player2BS.attackRate = 3;
             rightArm2 = GameObject.Find("fingertip_br2");
             leftArm2 = GameObject.Find("fingertip_bl2");
@@ -369,31 +371,25 @@ public class Main : MonoBehaviour
         {
             SceneManager.LoadScene("Start");
         }
-
-        if(player1BS.gardDmg > 100)
+        
+        if(player1BS.isGardCool)
         {
             player1BS.gardDmg = 100;
         }
-        if(player2BS.gardDmg == 100)
+        else if(player1BS.gardDmg != 0 && player1BS.gardCounter <= 120)
+        {
+            player1BS.gardDmg -= 0.02f;
+        }
+
+        if(player2BS.isGardCool)
         {
             player2BS.gardDmg = 100;
         }
-        if(player1BS.gardDmg != 0)
+        else if(player2BS.gardDmg != 0 && player2BS.gardCounter <= 120)
         {
-            player1BS.gardDmg -= 0.1f;
+            player2BS.gardDmg -= 0.02f;
         }
-        if(player2BS.gardDmg != 0)
-        {
-            player2BS.gardDmg -= 0.1f;
-        }
-        if(player1BS.isGardCool)
-        {
-            player1BS.gardDmg = 0;
-        }
-        if(player2BS.isGardCool)
-        {
-            player2BS.gardDmg = 0;
-        }
+
         gauges[4].fillAmount = 1 - player1BS.gardDmg / 100;
         gauges[5].fillAmount = 1 - player2BS.gardDmg / 100;
     }

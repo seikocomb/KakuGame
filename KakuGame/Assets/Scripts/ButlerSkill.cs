@@ -76,24 +76,13 @@ public class ButlerSkill : MonoBehaviour, ISkill
     void BufReset()
     {
         BS.power = 7;
-        switch(BS.enemy.name)
+        BS.enemyBS.power = BS.enemy.name switch
         {
-            case "kimono":
-            case "kimono2":
-                BS.enemyBS.power = 6;
-                break;
-            case "macho":
-            case "macho2":
-                BS.enemyBS.power = 8;
-                break;
-            case "speed":
-            case "speed2":
-                BS.enemyBS.power = 5;
-                break;
-            default:
-                BS.enemyBS.power = 7;
-                break;    
-        }
+            "kimono" or "kimono2" => 6,
+            "macho" or "macho2" => 8,
+            "speed" or "speed2" => 5,
+            _ => (float)7,
+        };
     }
 
     public void Reset()

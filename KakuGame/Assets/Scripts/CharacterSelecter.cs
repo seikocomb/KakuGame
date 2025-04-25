@@ -37,6 +37,8 @@ public class CharacterSelecter : MonoBehaviour
     TextMeshProUGUI timer;
     [SerializeField]GameObject[] decides;
 
+    [SerializeField]GameObject[] canvases;
+
     void Start()
     {
         characterNum1 = 0;
@@ -78,6 +80,8 @@ public class CharacterSelecter : MonoBehaviour
         status.SetActive(false);
         decides[0].SetActive(false);
         decides[1].SetActive(false);
+        canvases[0].SetActive(true);
+        canvases[1].SetActive(false);
 
         StartCoroutine(Timer(30));
     }
@@ -324,7 +328,7 @@ public class CharacterSelecter : MonoBehaviour
 
         if(isSelected1 && isSelected2)
         {
-            SceneManager.LoadScene("GameScene");
+            Invoke(nameof(DeleteSelect), 1);
         }
 
         for(int i = 0; i < 8; i++)
@@ -333,6 +337,18 @@ public class CharacterSelecter : MonoBehaviour
         }
         cursor[characterNum1].SetActive(true);
         cursor[characterNum2].SetActive(true);
+    }
+
+    void DeleteSelect()
+    {
+        canvases[0].SetActive(false);
+        canvases[1].SetActive(true);
+        Invoke(nameof(LoadScene), 1);
+    }
+
+    void LoadScene()
+    {
+        SceneManager.LoadScene("GameScene");
     }
 
     void Decide1()

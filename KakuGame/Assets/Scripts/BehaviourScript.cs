@@ -50,6 +50,7 @@ public class BehaviourScript : MonoBehaviour
     public float damage = 0;
     public float gardDmg = 0;
     public bool garded;
+    public int gardCounter = 0;
     public bool isGardCool;
     public float coolSpan;
     public bool isHadouhouWait = false;
@@ -260,12 +261,13 @@ public class BehaviourScript : MonoBehaviour
                                 if(AC.IsJump || AC.IsCrouch)
                                 {
                                     AC.IsKick = true;
+                                    Attacker(2);
                                 }
                                 else
                                 {
                                     AC.IsPunch = true;
+                                    Attacker(1);
                                 }
-                                Attacker(1);
 
                                 if(AC.IsCrouch)
                                 {
@@ -320,15 +322,27 @@ public class BehaviourScript : MonoBehaviour
 
                 if(Input.GetKey(gard) && !AC.IsJump && isGardCool == false && !(AC.IsPunch || AC.IsKick || AC.IsUpper))
                 {
-                    AC.IsGard = true;
-
-                    AC.IsPunch = false;
-                    AC.IsKick = false;
-                    AC.IsUpper = false;
+                    gardCounter ++;
+                    if(gardCounter < 120)
+                    {
+                        AC.IsGard = true;
+                        AC.IsPunch = false;
+                        AC.IsKick = false;
+                        AC.IsUpper = false;
+                    }
+                    else if(gardCounter == 120)
+                    {
+                        Invoke(nameof(GardZeroer), 6);
+                    }
+                    else
+                    {
+                        AC.IsGard = false;
+                    }
                 }
                 else
                 {
                     AC.IsGard = false;
+                    gardCounter = 0;
                 }
 
                 if(Input.GetKey(left) || Input.GetKey(right)){}
@@ -372,6 +386,13 @@ public class BehaviourScript : MonoBehaviour
                 CC.Move(moveDirection * Time.deltaTime);
 
                 tmp = transform.position;
+                if(tmp.z >= -4.9 && tmp.z <= 4.9)
+                {
+                    if(tmp.y < 0)
+                    {
+                        tmp.y = 0;
+                    }
+                }
                 transform.position = new Vector3(0, tmp.y, tmp.z);
 
                 if(isPlayer1)
@@ -428,6 +449,11 @@ public class BehaviourScript : MonoBehaviour
         }
     }
 
+    void GardZeroer()
+    {
+        gardCounter = 0;
+    }
+
     void Attacker(int num)
     {
         switch(num)
@@ -466,7 +492,6 @@ public class BehaviourScript : MonoBehaviour
     IEnumerator Rotater()
     {
         yield return new WaitForSeconds(0.13f * attackRate);
-        //yield return null;
         transform.Rotate(0, 180, 0);
     }
 

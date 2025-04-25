@@ -68,7 +68,7 @@ public class MachoSkill : MonoBehaviour, ISkill
         HS = Hadouhou.GetComponent<HadouhouScript>();
         HS.Fire(BS, Mathf.Lerp(100, 400, Math.Abs(gameObject.transform.position.z - BS.enemy.transform.position.z) / 10));
         Vector3 rot = transform.forward;
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
         BS.isHadouhouWait = false;
         Hadouhou.GetComponent<Rigidbody>().AddForce(rot * 8, ForceMode.Impulse);
         main.Player(4, 1);

@@ -22,7 +22,7 @@ public class HadouhouScript : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if(isSetBS)
+        if(isSetBS && BS.isHadouhouWait == false)
         {
             if(other.gameObject.transform.root.gameObject == BS.enemy)
             {
